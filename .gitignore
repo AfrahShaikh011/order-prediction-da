@@ -1,6 +1,34 @@
+# Python Virtual Environment
 venv/
+.venv/
+
+# Python Cache
 __pycache__/
-.ipynb_checkpoints/
 *.pyc
-models/*.pkl
+*.pyo
+*.pyd
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Frontend
+node_modules/
+frontend/node_modules/
+frontend/dist/
+
+# Environment Variables
+.env
+
+# Generated Files
+forecast.csv
+
+# Raw Dataset Files (optional)
 data/raw/
+
+# OS Files
+.DS_Store
+Thumbs.db
+
+# IDE Files
+.vscode/
+.idea/
