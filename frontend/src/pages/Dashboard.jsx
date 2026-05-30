@@ -32,7 +32,7 @@ function Dashboard() {
     try {
 
       const response = await axios.get(
-        "http://localhost:5000/predict"
+        "https://order-prediction-da.onrender.com/predict"
       );
 
       console.log(response.data);
@@ -89,7 +89,7 @@ function Dashboard() {
         {/* DOWNLOAD BUTTON */}
 
         <a
-          href="http://localhost:5000/download-forecast"
+          href="https://order-prediction-da.onrender.com/download-forecast"
           className="bg-green-500 px-6 py-3 rounded-xl font-bold hover:bg-green-600 transition"
         >
 
