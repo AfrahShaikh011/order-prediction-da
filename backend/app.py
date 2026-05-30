@@ -3,26 +3,42 @@ from flask_cors import CORS
 
 import pandas as pd
 import joblib
+import os
 
 app = Flask(__name__)
 
 CORS(app)
 
 # =========================
-# LOAD MODEL
+# DEPLOYMENT SAFE PATHS
 # =========================
 
-model = joblib.load(
-    "../models/best_model.pkl"
+BASE_DIR = os.path.dirname(
+    os.path.abspath(__file__)
+)
+
+MODEL_PATH = os.path.join(
+    BASE_DIR,
+    "..",
+    "models",
+    "best_model.pkl"
+)
+
+DATA_PATH = os.path.join(
+    BASE_DIR,
+    "..",
+    "data",
+    "processed",
+    "featured_orders.csv"
 )
 
 # =========================
-# LOAD DATA
+# LOAD MODEL & DATA
 # =========================
 
-df = pd.read_csv(
-    "../data/processed/featured_orders.csv"
-)
+model = joblib.load(MODEL_PATH)
+
+df = pd.read_csv(DATA_PATH)
 
 # =========================
 # PREDICT ROUTE
@@ -31,9 +47,7 @@ df = pd.read_csv(
 @app.route("/predict", methods=["GET"])
 def predict():
 
-    # =========================
-    # LATEST DATA
-    # =========================
+    # Latest record
 
     latest_data = df.iloc[-1:]
 
@@ -41,9 +55,9 @@ def predict():
         columns=["date", "sales"]
     )
 
-    prediction = model.predict(
-        X_future
-    )[0]
+    prediction = float(
+        model.predict(X_future)[0]
+    )
 
     # =========================
     # ACTUAL VS PREDICTED
@@ -75,7 +89,7 @@ def predict():
         latest_row["date"].values[0]
     )
 
-    for i in range(7):
+    for _ in range(7):
 
         X_future = latest_row.drop(
             columns=["date", "sales"]
@@ -94,18 +108,16 @@ def predict():
             ),
 
             "forecast": round(
-                future_sales, 2
+                future_sales,
+                2
             )
         })
-
-    # =========================
-    # RETURN RESPONSE
-    # =========================
 
     return jsonify({
 
         "predicted_sales": round(
-            float(prediction), 2
+            prediction,
+            2
         ),
 
         "model": "XGBoost",
@@ -120,6 +132,7 @@ def predict():
 
         "future_forecast": future_forecast
     })
+
 
 # =========================
 # DOWNLOAD FORECAST CSV
@@ -136,7 +149,7 @@ def download_forecast():
         latest_row["date"].values[0]
     )
 
-    for i in range(7):
+    for _ in range(7):
 
         X_future = latest_row.drop(
             columns=["date", "sales"]
@@ -155,7 +168,8 @@ def download_forecast():
             ),
 
             "forecast": round(
-                future_sales, 2
+                future_sales,
+                2
             )
         })
 
@@ -163,18 +177,45 @@ def download_forecast():
         future_forecast
     )
 
-    file_path = "forecast.csv"
+    csv_path = os.path.join(
+        BASE_DIR,
+        "forecast.csv"
+    )
 
     forecast_df.to_csv(
-        file_path,
+        csv_path,
         index=False
     )
 
     return send_file(
-        file_path,
+        csv_path,
         as_attachment=True
     )
 
+
+# =========================
+# HEALTH CHECK
+# =========================
+
+@app.route("/")
+def home():
+
+    return jsonify({
+
+        "status": "running",
+
+        "message": "Order Prediction API is live"
+    })
+
+
+# =========================
+# START APP
+# =========================
+
 if __name__ == "__main__":
 
-    app.run(debug=True)
+    app.run(
+        host="0.0.0.0",
+        port=5000,
+        debug=True
+    )
